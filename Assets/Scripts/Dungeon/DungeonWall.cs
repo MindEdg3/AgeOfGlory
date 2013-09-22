@@ -4,7 +4,8 @@ using System.Collections;
 [ExecuteInEditMode]
 public class DungeonWall : MonoBehaviour
 {
-	
+	[HideInInspector]
+	[SerializeField]
 	private int selectedWall;
 
 	public int SelectedWall {
