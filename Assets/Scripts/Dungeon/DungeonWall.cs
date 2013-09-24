@@ -49,5 +49,6 @@ public class DungeonWall : MonoBehaviour
 		newGraphics.name = nextGraphics.name;
 		newGraphics.transform.parent = transform;
 		newGraphics.transform.localPosition = nextGraphics.transform.localPosition;
+		newGraphics.transform.localRotation = Quaternion.identity;
 	}
 }

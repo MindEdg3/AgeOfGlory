@@ -31,7 +31,7 @@ public class DungeonManager : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-	
+		Debug.Log (DungeonData.RandomizeNewDungeon ().ToString ());
 	}
 	
 	// Update is called once per frame
