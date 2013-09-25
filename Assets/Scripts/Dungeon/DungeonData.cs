@@ -5,8 +5,8 @@ public class DungeonData : ScriptableObject
 {
 	#region Constants
 	private const int MAX_ROOMS_DEFAULT = 32;
-	private const int MIN_ROOMS_SIZE = 2;
-	private const int MAX_ROOMS_SIZE = 8;
+	private const int MIN_ROOMS_SIZE = 3;
+	private const int MAX_ROOMS_SIZE = 7;
 	#endregion
 	
 	public int width;
@@ -81,7 +81,13 @@ public class DungeonData : ScriptableObject
 			}
 		}
 		
-		//UNDONE: roads
+		for (int k = 0; k < roads.Count; k++) {
+			for (int j = 0; j <= roads[k].y2 - roads[k].y1; j++) {
+				for (int i = 0; i <= roads[k].x2 - roads[k].x1; i++) {
+					ret [i + roads [k].x1, j + roads [k].y1].road = roads [k];
+				}
+			}
+		}
 		
 		for (int k = 0; k < rooms.Count; k++) {
 			for (int j = 0; j < rooms[k].height; j++) {
@@ -107,6 +113,17 @@ public class DungeonData : ScriptableObject
 		
 		ret += "Dungeon " + width + "x" + height + ". Entrance in " + entranceX + ":" + entranceY + "\n";
 		
+		ret += "Rooms: ";
+		for (int i = 0; i < rooms.Count; i++) {
+			ret += ("Room" + i + " (" + Rooms [i].x + ", " + Rooms [i].y + ", " + Rooms [i].width + ", " + Rooms [i].height + "), ");
+		}
+		
+		ret += "\nRoads: ";
+		for (int i = 0; i < rooms.Count; i++) {
+			ret += ("Road" + i + " (" + Roads [i].x1 + ", " + Roads [i].y1 + ", " + Roads [i].x2 + ", " + Roads [i].y2 + "), ");
+		}
+		
+		ret += "\n\nMap:\n";
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
 				if (Tiles [i, j].room != null) {
@@ -168,7 +185,7 @@ public class DungeonData : ScriptableObject
 		}
 		
 		// create rooms
-		ret.rooms = PlaceRooms (
+		ret.Rooms = PlaceRooms (
 			DungeonData.MAX_ROOMS_DEFAULT,
 			DungeonData.MIN_ROOMS_SIZE,
 			DungeonData.MAX_ROOMS_SIZE,
@@ -178,7 +195,7 @@ public class DungeonData : ScriptableObject
 			ret.entranceY
 		);
 		
-		ret.roads = PlaceRoads (ret.rooms);
+		ret.Roads = PlaceRoads (ret.rooms);
 		
 		return ret;
 	}
@@ -233,13 +250,7 @@ public class DungeonData : ScriptableObject
 		// create another rooms
 		for (int i = 1; i < maxRooms; i++) {
 			// create new room
-			DungeonRoom newRoom = new DungeonRoom ();
-			
-			// set base values
-			newRoom.width = Random.Range (minRoomSize, maxRoomSize + 1);
-			newRoom.height = Random.Range (minRoomSize, maxRoomSize + 1);
-			newRoom.x = Random.Range (0, dungeonWidth - newRoom.width);
-			newRoom.y = Random.Range (0, dungeonHeight - newRoom.height);
+			DungeonRoom newRoom = CreateRoom (minRoomSize, maxRoomSize, dungeonWidth, dungeonHeight);
 			
 			// validating room
 			bool isNewRoomIntersecting = false;
@@ -258,12 +269,95 @@ public class DungeonData : ScriptableObject
 		
 		return ret;
 	}
-
+	
+	/// <summary>
+	/// Initializes new room with specified parameters.
+	/// </summary>
+	/// <returns>
+	/// Resulted room.
+	/// </returns>
+	/// <param name='minRoomSize'>
+	/// Minimum room size.
+	/// </param>
+	/// <param name='maxRoomSize'>
+	/// Max room size.
+	/// </param>
+	/// <param name='dungeonWidth'>
+	/// Dungeon width.
+	/// </param>
+	/// <param name='dungeonHeight'>
+	/// Dungeon height.
+	/// </param>
+	private static DungeonRoom CreateRoom (int minRoomSize, int maxRoomSize, int dungeonWidth, int dungeonHeight)
+	{
+		DungeonRoom ret = new DungeonRoom ();
+			
+		// set base values
+		ret.width = Random.Range (minRoomSize, maxRoomSize + 1);
+		ret.height = Random.Range (minRoomSize, maxRoomSize + 1);
+		ret.x = Random.Range (0, dungeonWidth - ret.width);
+		ret.y = Random.Range (0, dungeonHeight - ret.height);
+		
+		return ret;
+	}
+	
+	/// <summary>
+	/// Places the roads between rooms one after another. At first places horizontal
+	/// road, then vertical.
+	/// </summary>
+	/// <returns>
+	/// List of roads.
+	/// </returns>
+	/// <param name='rooms'>
+	/// Ordered list of rooms in dungeon.
+	/// </param>
 	private static List<DungeonRoad> PlaceRoads (List<DungeonRoom> rooms)
 	{
 		List<DungeonRoad> ret = new List<DungeonRoad> ();
 		
-		// UNDONE: Roads placing
+		// for every pair of room
+		for (int i = 1; i < rooms.Count; i++) {
+			DungeonRoad horRoad = new DungeonRoad ();
+			DungeonRoad vertRoad = new DungeonRoad ();
+			
+			// Parent room is a room which starts a horizontal road
+			int parentRoomIndex = i;
+			// Child room is a room in the end of vertical road
+			int childRoomIndex = i;
+			
+			if (Random.value > 0.5f) {
+				parentRoomIndex -= 1;
+			} else {
+				childRoomIndex -= 1;
+			}
+			
+			// road starts in parent room and pulled left or right to acheieve X of child room
+			int hx1 = rooms [parentRoomIndex].CenterX;
+			int hy1 = rooms [parentRoomIndex].CenterY;
+			int hx2 = rooms [childRoomIndex].CenterX;
+			int hy2 = hy1;
+			
+			// road starts in the end of horizontal road and pulled up or down to end in child room
+			int vx1 = rooms [childRoomIndex].CenterX;
+			int vy1 = rooms [parentRoomIndex].CenterY;
+			int vx2 = vx1;
+			int vy2 = rooms [childRoomIndex].CenterY;
+			
+			// Horizontal roads carved from left to right
+			horRoad.x1 = Mathf.Min (hx1, hx2);
+			horRoad.y1 = Mathf.Min (hy1, hy2);
+			horRoad.x2 = Mathf.Max (hx1, hx2);
+			horRoad.y2 = Mathf.Max (hy1, hy2);
+			
+			// Vertical roads carved from top to bottom
+			vertRoad.x1 = Mathf.Min (vx1, vx2);
+			vertRoad.y1 = Mathf.Min (vy1, vy2);
+			vertRoad.x2 = Mathf.Max (vx1, vx2);
+			vertRoad.y2 = Mathf.Max (vy1, vy2);
+							
+			ret.Add (horRoad);
+			ret.Add (vertRoad);
+		}	
 		
 		return ret;
 	}
