@@ -113,14 +113,14 @@ public class DungeonData : ScriptableObject
 		
 		ret += "Dungeon " + width + "x" + height + ". Entrance in " + entranceX + ":" + entranceY + "\n";
 		
-		ret += "Rooms: ";
+		ret += "\nRooms: ";
 		for (int i = 0; i < rooms.Count; i++) {
-			ret += ("Room" + i + " (" + Rooms [i].x + ", " + Rooms [i].y + ", " + Rooms [i].width + ", " + Rooms [i].height + "), ");
+			ret += ("Room" + i + " (" + Rooms [i].x + "," + Rooms [i].y + "," + Rooms [i].width + "," + Rooms [i].height + "), ");
 		}
 		
-		ret += "\nRoads: ";
+		ret += "\n\nRoads: ";
 		for (int i = 0; i < rooms.Count; i++) {
-			ret += ("Road" + i + " (" + Roads [i].x1 + ", " + Roads [i].y1 + ", " + Roads [i].x2 + ", " + Roads [i].y2 + "), ");
+			ret += ("Road" + i + " (" + Roads [i].x1 + "," + Roads [i].y1 + "," + Roads [i].x2 + "," + Roads [i].y2 + "), ");
 		}
 		
 		ret += "\n\nMap:\n";
@@ -150,7 +150,7 @@ public class DungeonData : ScriptableObject
 	/// </returns>
 	public static DungeonData RandomizeNewDungeon ()
 	{
-		return RandomizeNewDungeon (16, 16);
+		return RandomizeNewDungeon (32, 32);
 	}
 	
 	/// <summary>

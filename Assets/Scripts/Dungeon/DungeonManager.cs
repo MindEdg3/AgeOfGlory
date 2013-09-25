@@ -3,7 +3,12 @@ using System.Collections;
 
 public class DungeonManager : MonoBehaviour
 {
+	#region Constants
 	public const string WALLS_PATH = "Prefabs/DungeonWalls/";
+	public const string ROADS_PATH = "Prefabs/Roads";
+	#endregion
+	
+	#region Properties
 	public string[] arr_wallTypes;
 
 	public string[] WallTypes {
@@ -14,6 +19,22 @@ public class DungeonManager : MonoBehaviour
 			arr_wallTypes = value;
 		}
 	}
+	
+	private DungeonData _currentDungeon;
+
+	public DungeonData CurrentDungeon {
+		get {
+			return this._currentDungeon;
+		}
+		set {
+			if (_currentDungeon != value) {
+				_currentDungeon = value;
+				AssembleDungeon (value);
+			}
+		}
+	}
+
+	#endregion
 	
 	#region Singletone
 	private static DungeonManager _instance;
@@ -31,12 +52,33 @@ public class DungeonManager : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		Debug.Log (DungeonData.RandomizeNewDungeon ().ToString ());
+		DungeonData newDungeon = DungeonData.RandomizeNewDungeon ();
+		CurrentDungeon = newDungeon;
+		Debug.Log (newDungeon.ToString ());
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
 	
+	}
+	
+	/// <summary>
+	/// Assembles the dungeon.
+	/// </summary>
+	/// <param name='dungeon'>
+	/// Dungeon.
+	/// </param>
+	void AssembleDungeon (DungeonData dungeon)
+	{
+		DungeonDataTile[,] tiles = dungeon.Tiles;
+		
+		for (int j = 0; j < dungeon.height; j++) {
+			for (int i = 0; i < dungeon.width; i++) {
+				if (tiles [i, j].room != null) {
+					
+				}
+			}
+		}
 	}
 }
