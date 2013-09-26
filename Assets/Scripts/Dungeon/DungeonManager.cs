@@ -115,7 +115,16 @@ public class DungeonManager : MonoBehaviour
 				if (tiles [i, j].room != null) {
 					AddFloor (arr_floorTypes [0], i, j);
 					AddCeiling (arr_ceilingsTypes [0], i, j);
-
+					
+					// Left wall
+					if (i == 0) {
+						AddWall (arr_wallTypes [0], i - 1, j, i, j);
+					}
+					// Top wall
+					if (j == 0) {
+						AddWall (arr_wallTypes [0], i, j - 1, i, j);
+					}
+					
 					if (i < dungeon.width - 1) {
 						DungeonDataTile rightTile = tiles [i + 1, j];
 						if (rightTile.room == null && rightTile.road != null) {
@@ -123,6 +132,8 @@ public class DungeonManager : MonoBehaviour
 						} else if (rightTile.room == null && rightTile.road == null) {
 							AddWall (arr_wallTypes [0], i + 1, j, i, j);
 						}
+					} else {
+						AddWall (arr_wallTypes [0], i + 1, j, i, j);
 					}
 					if (j < dungeon.height - 1) {
 						DungeonDataTile bottomTile = tiles [i, j + 1];
@@ -131,6 +142,8 @@ public class DungeonManager : MonoBehaviour
 						} else if (bottomTile.room == null && bottomTile.road == null) {
 							AddWall (arr_wallTypes [0], i, j + 1, i, j);
 						}
+					} else {
+						AddWall (arr_wallTypes [0], i, j + 1, i, j);
 					}
 				} else if (tiles [i, j].road != null) {
 					AddFloor (arr_floorTypes [0], i, j);
