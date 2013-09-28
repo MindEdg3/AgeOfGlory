@@ -70,6 +70,28 @@ public class DungeonManager : MonoBehaviour
 		}
 	}
 	
+	private PlayerDungeonController _myPlayer;
+	
+	public PlayerDungeonController MyPlayer {
+		get {
+			if (_myPlayer == null) {
+				_myPlayer = GameObject.FindGameObjectWithTag ("Player").GetComponent<PlayerDungeonController> ();
+			}
+			return _myPlayer;
+		}
+	}
+	
+	private Transform _myPlayerTr;
+	
+	public Transform MyPlayerTr {
+		get {
+			if (_myPlayerTr == null) {
+				_myPlayerTr = MyPlayer.Tr;
+			}
+			return _myPlayerTr;
+		}
+	}
+	
 	#endregion
 	
 	#region Singletone
@@ -91,6 +113,12 @@ public class DungeonManager : MonoBehaviour
 		DungeonData newDungeon = DungeonData.RandomizeNewDungeon ();
 		CurrentDungeon = newDungeon;
 		Debug.Log (newDungeon.ToString ());
+		
+		// Init player
+		MyPlayerTr.position = DungeonUtils.GetPositionByIndex (CurrentDungeon.entranceX, CurrentDungeon.entranceY);
+		MyPlayer.State = PlayerState.Idle;
+		MyPlayer._currentX = CurrentDungeon.entranceX;
+		MyPlayer._currentY = CurrentDungeon.entranceY;
 	}
 	
 	// Update is called once per frame
