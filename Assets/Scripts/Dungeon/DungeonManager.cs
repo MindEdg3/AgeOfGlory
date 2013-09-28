@@ -9,7 +9,6 @@ public class DungeonManager : MonoBehaviour
 	public const string PASSAGES_PATH = "Prefabs/DungeonPassages/";
 	public const string FLOORS_PATH = "Prefabs/DungeonFloors/";
 	public const string CEILINGS_PATH = "Prefabs/DungeonCeilings/";
-	public const float 	TILE_SIZE = 4;
 	#endregion
 	
 	#region Properties
@@ -202,7 +201,7 @@ public class DungeonManager : MonoBehaviour
 	{
 		GameObject floorPrefab = (Resources.Load (DungeonManager.FLOORS_PATH + floorName) as GameObject).gameObject;
 		
-		Vector3 pos = new Vector3 (i * TILE_SIZE, 0f, -j * TILE_SIZE);
+		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
 		
 		GameObject newFloor = Instantiate (floorPrefab, pos, Quaternion.identity) as GameObject;
 	}
@@ -223,7 +222,7 @@ public class DungeonManager : MonoBehaviour
 	{
 		GameObject ceilingPrefab = (Resources.Load (DungeonManager.CEILINGS_PATH + ceilingName) as GameObject).gameObject;
 		
-		Vector3 pos = new Vector3 (i * TILE_SIZE, 0f, -j * TILE_SIZE);
+		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
 		
 		GameObject newCeiling = Instantiate (ceilingPrefab, pos, Quaternion.identity) as GameObject;
 	}
@@ -250,7 +249,7 @@ public class DungeonManager : MonoBehaviour
 	{
 		GameObject passagePrefab = (Resources.Load (DungeonManager.PASSAGES_PATH + passageName) as GameObject).gameObject;
 		
-		Vector3 pos = new Vector3 ((i1 + (i2 - i1) * 0.5f) * TILE_SIZE, 0f, -(j1 + (j2 - j1) * 0.5f) * TILE_SIZE);
+		Vector3 pos = DungeonUtils.GetPositionBetweenIndexes (i1, j1, i2, j2);
 		Quaternion rot = Quaternion.identity;
 		
 		if (i1 == i2 && j1 < j2) {
@@ -288,7 +287,7 @@ public class DungeonManager : MonoBehaviour
 	{
 		GameObject wallPrefab = (Resources.Load (DungeonManager.WALLS_PATH + wallName) as GameObject).gameObject;
 		
-		Vector3 pos = new Vector3 ((i1 + (i2 - i1) * 0.5f) * TILE_SIZE, 0f, -(j1 + (j2 - j1) * 0.5f) * TILE_SIZE);
+		Vector3 pos = DungeonUtils.GetPositionBetweenIndexes (i1, j1, i2, j2);
 		Quaternion rot = Quaternion.identity;
 		
 		if (i1 == i2 && j1 < j2) {
