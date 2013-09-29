@@ -59,17 +59,21 @@ public class PlayerDungeonController : CreatureEntity
 		} else if (Input.GetButtonDown ("Left")) {
 			Turn (false);
 		} else if (Input.GetButton ("Forward")) {
-			MoveTo (Direction.Forward);
-			State = PlayerState.Move;
+			if (MoveTo (Direction.Forward)) {
+				State = PlayerState.Move;
+			}
 		} else if (Input.GetButton ("Backward")) {
-			MoveTo (Direction.Backward);
-			State = PlayerState.Move;
+			if (MoveTo (Direction.Backward)) {
+				State = PlayerState.Move;
+			}
 		} else if (Input.GetButton ("Strafe Right")) {
-			MoveTo (Direction.Right);
-			State = PlayerState.Move;
+			if (MoveTo (Direction.Right)) {
+				State = PlayerState.Move;
+			}
 		} else if (Input.GetButton ("Strafe Left")) {
-			MoveTo (Direction.Left);
-			State = PlayerState.Move;
+			if (MoveTo (Direction.Left)) {
+				State = PlayerState.Move;
+			}
 		}
 	}
 	

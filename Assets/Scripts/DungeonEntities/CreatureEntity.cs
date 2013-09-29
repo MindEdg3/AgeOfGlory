@@ -15,30 +15,74 @@ public class CreatureEntity : DungeonEntity
 	/// Moves to tile according to pressed key realtive to current direction. E.g., if player directed Backwards and pressed key Strafe Right,
 	/// player will move to tile in the left, relative to world coordinates.
 	/// </summary>
+	/// <returns>
+	/// Did moving succeed or not.
+	/// </returns>
 	/// <param name='targetDirectionRelative'>
 	/// Target direction relative to current direction.
 	/// </param>
-	protected void MoveTo (Direction targetDirectionRelative)
+	protected bool MoveTo (Direction targetDirectionRelative)
 	{
+		bool ret = false;
+		
 		// Get <see cref="Direction"/> of target tile
 		Direction targetDirectionAbsolute = (Direction)(((byte)_currentDirection + (byte)targetDirectionRelative) % 4);
 		
 		// set target position
 		switch (targetDirectionAbsolute) {
 		case Direction.Forward:
-			_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, --_currentY);
+			if (CheckTileMoveability (_currentX, _currentY - 1)) {
+				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, --_currentY);
+				ret = true;
+			}
 			break;
 		case Direction.Right:
-			_targetPosition = DungeonUtils.GetPositionByIndex (++_currentX, _currentY);
+			if (CheckTileMoveability (_currentX + 1, _currentY)) {
+				_targetPosition = DungeonUtils.GetPositionByIndex (++_currentX, _currentY);
+				ret = true;
+			}
 			break;
 		case Direction.Backward:
-			_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, ++_currentY);
+			if (CheckTileMoveability (_currentX, _currentY + 1)) {
+				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, ++_currentY);
+				ret = true;
+			}
 			break;
 		case Direction.Left:
-			_targetPosition = DungeonUtils.GetPositionByIndex (--_currentX, _currentY);
+			if (CheckTileMoveability (_currentX - 1, _currentY)) {
+				_targetPosition = DungeonUtils.GetPositionByIndex (--_currentX, _currentY);
+				ret = true;
+			}
 			break;
 		default:
 			break;
+		}
+		
+		return ret;
+	}
+	
+	/// <summary>
+	/// Checks the tile moveability.
+	/// </summary>
+	/// <returns>
+	/// The tile moveability.
+	/// </returns>
+	/// <param name='tileX'>
+	/// X tile index.
+	/// </param>
+	/// <param name='tileY'>
+	/// Y tile index.
+	/// </param>
+	protected bool CheckTileMoveability (int tileX, int tileY)
+	{
+		if (tileX >= 0 && tileX < Dm.CurrentDungeon.width && 
+			tileY >= 0 && tileY < Dm.CurrentDungeon.height) {
+			
+			DungeonDataTile tile = Dm.CurrentDungeon.Tiles [tileX, tileY];
+		
+			return tile.road != null || tile.room != null;
+		} else {
+			return false;
 		}
 	}
 	

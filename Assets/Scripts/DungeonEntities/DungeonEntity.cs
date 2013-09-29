@@ -14,6 +14,17 @@ public class DungeonEntity : MonoBehaviour
 			return this._tr;
 		}
 	}
+	
+	private DungeonManager _myDungeonManager;
+
+	public DungeonManager Dm {
+		get {
+			if (_myDungeonManager == null) {
+				_myDungeonManager = DungeonManager.Instance;
+			}
+			return _myDungeonManager;
+		}
+	}
 	#endregion
 
 	// Use this for initialization
