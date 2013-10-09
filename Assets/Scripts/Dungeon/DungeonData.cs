@@ -97,7 +97,6 @@ public class DungeonData : ScriptableObject
 			}
 		}
 		
-		
 		return ret;
 	}
 	
@@ -480,5 +479,15 @@ public class DungeonRoad
 	public DungeonRoad ()
 	{
 	}
-
+	
+	/// <summary>
+	/// Returns a <see cref="System.String"/> that represents the current <see cref="DungeonRoad"/>.
+	/// </summary>
+	/// <returns>
+	/// A <see cref="System.String"/> that represents the current <see cref="DungeonRoad"/>.
+	/// </returns>
+	public override string ToString ()
+	{
+		return "Road { x1:" + x1 + ", x2:" + x2 + ", y1:" + y1 + ", y2:" + y2 + "}";
+	}
 }

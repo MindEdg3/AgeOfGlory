@@ -9,6 +9,12 @@ public class DungeonManager : MonoBehaviour
 	public const string PASSAGES_PATH = "Prefabs/DungeonPassages/";
 	public const string FLOORS_PATH = "Prefabs/DungeonFloors/";
 	public const string CEILINGS_PATH = "Prefabs/DungeonCeilings/";
+	public const string LIGHTS_PATH = "Prefabs/Lights/";
+	#endregion
+	
+	#region Fields
+	public Dictionary<int, GameObject> walls = new Dictionary<int, GameObject> ();
+	public Dictionary<int, GameObject> torches = new Dictionary<int, GameObject> ();
 	#endregion
 	
 	#region Properties
@@ -134,6 +140,142 @@ public class DungeonManager : MonoBehaviour
 	/// Dungeon.
 	/// </param>
 	public void AssembleDungeon (DungeonData dungeon)
+	{	
+		PlaceBaseGeometry (dungeon);
+		DecorateRoads (dungeon);
+//		DecorateRooms ();
+	}
+	
+	/// <summary>
+	/// Floor factory.
+	/// </summary>
+	/// <param name='floorName'>
+	/// Floor prefab name.
+	/// </param>
+	/// <param name='i'>
+	/// I position.
+	/// </param>
+	/// <param name='j'>
+	/// J position.
+	/// </param>
+	public void AddFloor (string floorName, int i, int j)
+	{
+		GameObject floorPrefab = (Resources.Load (DungeonManager.FLOORS_PATH + floorName) as GameObject).gameObject;
+		
+		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
+		
+		GameObject newFloor = Instantiate (floorPrefab, pos, Quaternion.identity) as GameObject;
+	}
+	
+	/// <summary>
+	/// Ceiling factory.
+	/// </summary>
+	/// <param name='ceilingName'>
+	/// Ceiling prefab name.
+	/// </param>
+	/// <param name='i'>
+	/// I position.
+	/// </param>
+	/// <param name='j'>
+	/// J position.
+	/// </param>
+	public void AddCeiling (string ceilingName, int i, int j)
+	{
+		GameObject ceilingPrefab = (Resources.Load (DungeonManager.CEILINGS_PATH + ceilingName) as GameObject).gameObject;
+		
+		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
+		
+		GameObject newCeiling = Instantiate (ceilingPrefab, pos, Quaternion.identity) as GameObject;
+	}
+	
+	/// <summary>
+	/// Passage factory.
+	/// </summary>
+	/// <param name='passageName'>
+	/// Passage prefab name.
+	/// </param>
+	/// <param name='i1'>
+	/// Entry I position.
+	/// </param>
+	/// <param name='j1'>
+	/// Entry J position.
+	/// </param>
+	/// <param name='i2'>
+	/// Exit I position.
+	/// </param>
+	/// <param name='j2'>
+	/// Exit J position.
+	/// </param>
+	public void AddPassage (string passageName, int i1, int j1, int i2, int j2)
+	{
+		GameObject passagePrefab = (Resources.Load (DungeonManager.PASSAGES_PATH + passageName) as GameObject).gameObject;
+		
+		Vector3 pos = DungeonUtils.GetPositionBetweenTilesByIndex (i1, j1, i2, j2);
+		Quaternion rot = Quaternion.identity;
+		
+		if (i1 == i2 && j1 < j2) {
+			rot = Quaternion.identity;
+		} else if (i2 < i1 && j1 == j2) {
+			rot = Quaternion.Euler (0f, 90f, 0f);
+		} else if (i1 == i2 && j2 < j1) {
+			rot = Quaternion.Euler (0f, 180f, 0f);
+		} else if (i1 < i2 && j1 == j2) {
+			rot = Quaternion.Euler (0f, 270f, 0f);
+		}
+		
+		GameObject newPassage = Instantiate (passagePrefab, pos, rot) as GameObject;
+	}
+
+	/// <summary>
+	/// Wall factory.
+	/// </summary>
+	/// <param name='wallName'>
+	/// Wall prefab name.
+	/// </param>
+	/// <param name='i1'>
+	/// Entry I position.
+	/// </param>
+	/// <param name='j1'>
+	/// Entry J position.
+	/// </param>
+	/// <param name='i2'>
+	/// Exit I position.
+	/// </param>
+	/// <param name='j2'>
+	/// Exit J position.
+	/// </param>
+	public void AddWall (string wallName, int i1, int j1, int i2, int j2)
+	{
+		GameObject wallPrefab = (Resources.Load (DungeonManager.WALLS_PATH + wallName) as GameObject).gameObject;
+		
+		Vector3 pos = DungeonUtils.GetPositionBetweenTilesByIndex (i1, j1, i2, j2);
+		Quaternion rot = Quaternion.identity;
+		
+		if (i1 == i2 && j1 < j2) {
+			rot = Quaternion.identity;
+		} else if (i2 < i1 && j1 == j2) {
+			rot = Quaternion.Euler (0f, 90f, 0f);
+		} else if (i1 == i2 && j2 < j1) {
+			rot = Quaternion.Euler (0f, 180f, 0f);
+		} else if (i1 < i2 && j1 == j2) {
+			rot = Quaternion.Euler (0f, 270f, 0f);
+		}
+		
+		GameObject newWall = Instantiate (wallPrefab, pos, rot) as GameObject;
+		
+		int newWallCode = DungeonUtils.GetCodeBetweenTilesByIndex (i1, j1, i2, j2);
+		newWall.name = "wall_" + newWallCode + "_" + wallName;
+		
+		walls.Add (newWallCode, newWall);
+	}
+	
+	/// <summary>
+	/// Places the base geometry: walls, floors, ceilings.
+	/// </summary>
+	/// <param name='dungeon'>
+	/// Dungeon.
+	/// </param>
+	private void PlaceBaseGeometry (DungeonData dungeon)
 	{
 		DungeonDataTile[,] tiles = dungeon.Tiles;
 		
@@ -214,120 +356,79 @@ public class DungeonManager : MonoBehaviour
 	}
 	
 	/// <summary>
-	/// Floor factory.
+	/// Decorates the roads.
 	/// </summary>
-	/// <param name='floorName'>
-	/// Floor prefab name.
+	/// <param name='dungeon'>
+	/// Dungeon.
 	/// </param>
-	/// <param name='i'>
-	/// I position.
-	/// </param>
-	/// <param name='j'>
-	/// J position.
-	/// </param>
-	public void AddFloor (string floorName, int i, int j)
+	public void DecorateRoads (DungeonData dungeon)
 	{
-		GameObject floorPrefab = (Resources.Load (DungeonManager.FLOORS_PATH + floorName) as GameObject).gameObject;
+		GameObject torchPrefab = (Resources.Load (DungeonManager.LIGHTS_PATH + "Torch") as GameObject).gameObject;
 		
-		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
-		
-		GameObject newFloor = Instantiate (floorPrefab, pos, Quaternion.identity) as GameObject;
-	}
-	
-	/// <summary>
-	/// Ceiling factory.
-	/// </summary>
-	/// <param name='ceilingName'>
-	/// Ceiling prefab name.
-	/// </param>
-	/// <param name='i'>
-	/// I position.
-	/// </param>
-	/// <param name='j'>
-	/// J position.
-	/// </param>
-	public void AddCeiling (string ceilingName, int i, int j)
-	{
-		GameObject ceilingPrefab = (Resources.Load (DungeonManager.CEILINGS_PATH + ceilingName) as GameObject).gameObject;
-		
-		Vector3 pos = DungeonUtils.GetPositionByIndex (i, j);
-		
-		GameObject newCeiling = Instantiate (ceilingPrefab, pos, Quaternion.identity) as GameObject;
-	}
-	
-	/// <summary>
-	/// Passage factory.
-	/// </summary>
-	/// <param name='passageName'>
-	/// Passage prefab name.
-	/// </param>
-	/// <param name='i1'>
-	/// Entry I position.
-	/// </param>
-	/// <param name='j1'>
-	/// Entry J position.
-	/// </param>
-	/// <param name='i2'>
-	/// Exit I position.
-	/// </param>
-	/// <param name='j2'>
-	/// Exit J position.
-	/// </param>
-	public void AddPassage (string passageName, int i1, int j1, int i2, int j2)
-	{
-		GameObject passagePrefab = (Resources.Load (DungeonManager.PASSAGES_PATH + passageName) as GameObject).gameObject;
-		
-		Vector3 pos = DungeonUtils.GetPositionBetweenIndexes (i1, j1, i2, j2);
-		Quaternion rot = Quaternion.identity;
-		
-		if (i1 == i2 && j1 < j2) {
-			rot = Quaternion.identity;
-		} else if (i2 < i1 && j1 == j2) {
-			rot = Quaternion.Euler (0f, 90f, 0f);
-		} else if (i1 == i2 && j2 < j1) {
-			rot = Quaternion.Euler (0f, 180f, 0f);
-		} else if (i1 < i2 && j1 == j2) {
-			rot = Quaternion.Euler (0f, 270f, 0f);
+		// Torches
+		List<DungeonRoad> roads = dungeon.Roads;
+		for (int r = 0; r < roads.Count; r++) {
+			DungeonRoad road = roads [r];
+			
+			// for every tile in road
+			for (int j = road.y1; j <= road.y2; j++) {
+				for (int i = road.x1; i <= road.x2; i++) {
+					// 50% to create a torchlight
+					if (Random.value > 0.5f) {
+						//if it is a corridor
+						if (dungeon.Tiles [i, j].room == null) {
+							
+							// slight randomiztion of first side to be checked
+							int randomStart = Random.Range (0, 4);
+							
+							// check every side around a floor for a wall
+							for (byte s = 0; s < 4; s++) {
+								int x = 0, y = 0;
+							
+								// limit randomized index to maximum value of 4
+								int startIndex = (s + randomStart) % 4;
+								
+								switch (startIndex) {
+								case 0:
+									x = i;
+									y = j - 1;
+									break;
+								case 1:
+									x = i + 1;
+									y = j;
+									break;
+								case 2:
+									x = i;
+									y = j + 1;
+									break;
+								case 3:
+									x = i - 1;
+									y = j;
+									break;
+								}
+							
+								int code = DungeonUtils.GetCodeBetweenTilesByIndex (x, y, i, j);
+							
+								// if there are wall
+								if (walls.ContainsKey (code)) {
+									// and torch hasn't been attached already
+									if (!torches.ContainsKey (code)) {
+										// create it at wall and save to collection!
+										Vector3 torchPosition = walls [code].transform.position;
+										Quaternion torchRotation = Quaternion.Euler (0f, startIndex * 90f, 0f);
+										GameObject newTorch = Instantiate (torchPrefab, torchPosition, torchRotation) as GameObject;
+										newTorch.name = "torch_" + code;
+										
+										torches.Add (code, newTorch);
+									}
+									// anyway, we don't need any more torches for this tile..
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
-		
-		GameObject newPassage = Instantiate (passagePrefab, pos, rot) as GameObject;
-	}
-
-	/// <summary>
-	/// Wall factory.
-	/// </summary>
-	/// <param name='wallName'>
-	/// Wall prefab name.
-	/// </param>
-	/// <param name='i1'>
-	/// Entry I position.
-	/// </param>
-	/// <param name='j1'>
-	/// Entry J position.
-	/// </param>
-	/// <param name='i2'>
-	/// Exit I position.
-	/// </param>
-	/// <param name='j2'>
-	/// Exit J position.
-	/// </param>
-	public void AddWall (string wallName, int i1, int j1, int i2, int j2)
-	{
-		GameObject wallPrefab = (Resources.Load (DungeonManager.WALLS_PATH + wallName) as GameObject).gameObject;
-		
-		Vector3 pos = DungeonUtils.GetPositionBetweenIndexes (i1, j1, i2, j2);
-		Quaternion rot = Quaternion.identity;
-		
-		if (i1 == i2 && j1 < j2) {
-			rot = Quaternion.identity;
-		} else if (i2 < i1 && j1 == j2) {
-			rot = Quaternion.Euler (0f, 90f, 0f);
-		} else if (i1 == i2 && j2 < j1) {
-			rot = Quaternion.Euler (0f, 180f, 0f);
-		} else if (i1 < i2 && j1 == j2) {
-			rot = Quaternion.Euler (0f, 270f, 0f);
-		}
-		
-		GameObject newWall = Instantiate (wallPrefab, pos, rot) as GameObject;
 	}
 }

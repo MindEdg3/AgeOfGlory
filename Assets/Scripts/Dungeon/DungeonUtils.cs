@@ -50,12 +50,96 @@ public static class DungeonUtils
 	/// <param name='j2'>
 	/// Second tile J index.
 	/// </param>
-	public static Vector3 GetPositionBetweenIndexes (int i1, int j1, int i2, int j2)
+	public static Vector3 GetPositionBetweenTilesByIndex (int i1, int j1, int i2, int j2)
 	{
 		Vector3 ret;
 		
 		ret = new Vector3 (((i1 + i2) * 0.5f) * TileSize, 0f, -((j1 + j2) * 0.5f) * TileSize);
 		
 		return ret;
+	}
+	
+	/// <summary>
+	/// Get coded pepresentation of the tile indexes.
+	/// </summary>
+	/// <returns>
+	/// The code of tile indexes.
+	/// </returns>
+	/// <param name='i'>
+	/// X index.
+	/// </param>
+	/// <param name='j'>
+	/// Y index.
+	/// </param>
+	public static int GetCodeOfTileByIndex (int i, int j)
+	{
+		return (i << 8) + j;
+	}
+	
+	/// <summary>
+	/// Decode code to tile indexes.
+	/// </summary>
+	/// <param name='code'>
+	/// Code.
+	/// </param>
+	/// <param name='i'>
+	/// X out index.
+	/// </param>
+	/// <param name='j'>
+	/// Y out index.
+	/// </param>
+	public static void GetIndexesOfTileByCode (int code, out int i, out int j)
+	{
+		i = code >> 8;
+		j = code & 255;
+	}
+	
+	/// <summary>
+	/// Get coded representaion of indexes of two tiles
+	/// </summary>
+	/// <returns>
+	/// The code of tiles indexes.
+	/// </returns>
+	/// <param name='i1'>
+	/// First tile X index.
+	/// </param>
+	/// <param name='j1'>
+	/// First tile Y index.
+	/// </param>
+	/// <param name='i2'>
+	/// Second tile X index.
+	/// </param>
+	/// <param name='j2'>
+	/// Second tile Y index.
+	/// </param>
+	public static int GetCodeBetweenTilesByIndex (int i1, int j1, int i2, int j2)
+	{
+		return ((i1 - 128) << 24) + (j1 << 16) + (i2 << 8) + j2;
+	}
+	
+	/// <summary>
+	/// Decode code to tile indexes.
+	/// </summary>
+	/// <param name='code'>
+	/// Code.
+	/// </param>
+	/// <param name='i1'>
+	/// First tile X index.
+	/// </param>
+	/// <param name='j1'>
+	/// First tile Y index.
+	/// </param>
+	/// <param name='i2'>
+	/// Second tile X index.
+	/// </param>
+	/// <param name='j2'>
+	/// Second tile Y index.
+	/// </param>
+	public static void GetIndexesBetweenTilesByCode (int code, out int i1, out int j1, out int i2, out int j2)
+	{
+		i1 = (code >> 24) + 128;
+		j1 = ((code >> 16) & 255);
+		i2 = ((code >> 8) & 255);
+		j2 = (code & 255);
 	}
 }
