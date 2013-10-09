@@ -40,9 +40,9 @@ ModelImporter:
     secondaryUVPackMargin: 4
   tangentSpace:
     normalSmoothAngle: 180
-    splitTangentsAcrossUV: 0
-    normalImportMode: 1
-    tangentImportMode: 2
+    splitTangentsAcrossUV: 1
+    normalImportMode: 0
+    tangentImportMode: 1
   importAnimation: 1
   copyAvatar: 0
   humanDescription:

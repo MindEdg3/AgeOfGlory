@@ -1,30 +1,13 @@
 fileFormatVersion: 2
-guid: 94263325c38384f20abf25a6207393bb
+guid: ff0a4ed46cebf4dad9f31fd52ffa29de
 ModelImporter:
   serializedVersion: 15
   fileIDToRecycleName:
-    100000: imagePlane1
-    100002: Mount
-    100004: pCylinder1
-    100006: pPipe1
-    100008: Torch
-    100010: //RootNode
-    100012: transform1
-    100014: transform2
-    400000: imagePlane1
-    400002: Mount
-    400004: pCylinder1
-    400006: pPipe1
-    400008: Torch
-    400010: //RootNode
-    400012: transform1
-    400014: transform2
-    2300000: Mount
-    2300002: Torch
-    3300000: Mount
-    3300002: Torch
-    4300000: Torch
-    4300002: Mount
+    100000: //RootNode
+    400000: //RootNode
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: floor
     9500000: //RootNode
   materials:
     importMaterials: 1

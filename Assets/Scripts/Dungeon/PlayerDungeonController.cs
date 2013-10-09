@@ -35,6 +35,11 @@ public class PlayerDungeonController : CreatureEntity
 	{
 		base.Update ();
 		
+		if (Input.GetKeyDown (KeyCode.Space)) {
+			Light l = GetComponentInChildren<Light> ();
+			l.enabled = !l.enabled;
+		}
+		
 		switch (State) {
 		case PlayerState.Inactive:
 			break;
