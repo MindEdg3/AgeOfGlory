@@ -6,6 +6,8 @@ using System.Collections;
 /// </summary>
 public class PlayerDungeonController : CreatureEntity
 {
+	public float rotationSpeed;
+	
 	#region Properties
 	private PlayerState _state;
 	
@@ -52,6 +54,8 @@ public class PlayerDungeonController : CreatureEntity
 		default:
 			break;
 		}
+		
+		Tr.rotation = Quaternion.RotateTowards (Tr.rotation, Quaternion.Euler (0f, (byte)_currentDirection * 90f, 0f), Time.deltaTime * rotationSpeed);
 	}
 	
 	/// <summary>
@@ -93,6 +97,13 @@ public class PlayerDungeonController : CreatureEntity
 		} else {
 			Tr.position = nextPosition;
 		}	
+	}
+	
+	protected override void Turn (bool isToRight)
+	{
+		// switch <see cref="Direction"/> to left or right direction
+		byte newDirection = (byte)(((byte)_currentDirection + (isToRight ? 1 : 3)) % 4);
+		_currentDirection = (Direction)(newDirection);
 	}
 }
 

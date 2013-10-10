@@ -92,7 +92,7 @@ public class CreatureEntity : DungeonEntity
 	/// <param name='isToRight'>
 	/// Is to turn to right.
 	/// </param>
-	protected void Turn (bool isToRight)
+	protected virtual void Turn (bool isToRight)
 	{
 		// switch <see cref="Direction"/> to left or right direction
 		byte newDirection = (byte)(((byte)_currentDirection + (isToRight ? 1 : 3)) % 4);
