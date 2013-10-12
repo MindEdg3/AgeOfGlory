@@ -32,9 +32,14 @@ public class PlayerDungeonController : CreatureEntity
 	{
 	}
 	
+	Vector3 lastPosition;
+	
 	// Update is called once per frame
 	protected override void Update ()
 	{
+		lastPosition = transform.position;
+		
+		
 		base.Update ();
 		
 		if (Input.GetKeyDown (KeyCode.Space)) {
