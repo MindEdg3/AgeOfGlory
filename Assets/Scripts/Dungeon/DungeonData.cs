@@ -23,7 +23,7 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			if (rooms != value) {
-				_tiles = null;
+				_tiles_old = null;
 				rooms = value;
 			}
 		}
@@ -37,13 +37,13 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			if (roads != value) {
-				_tiles = null;
+				_tiles_old = null;
 				roads = value;
 			}
 		}
 	}
 	
-	private DungeonDataTile[,] _tiles;
+	private Dictionary <int, DungeonDataTile> _tiles;
 	
 	/// <summary>
 	/// The tiles of this dungeon. If rooms or roads had been changed, tiles need to be recreated.
@@ -51,7 +51,7 @@ public class DungeonData : ScriptableObject
 	/// <value>
 	/// The tiles of this dungeon.
 	/// </value>
-	public DungeonDataTile[,] Tiles {
+	public Dictionary <int, DungeonDataTile> Tiles {
 		get {
 			if (this._tiles == null) {
 				this._tiles = GetTiles ();
@@ -60,6 +60,26 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			this._tiles = value;
+		}
+	}
+	
+	private DungeonDataTile[,] _tiles_old;
+	
+	/// <summary>
+	/// The tiles of this dungeon. If rooms or roads had been changed, tiles need to be recreated.
+	/// </summary>
+	/// <value>
+	/// The tiles of this dungeon.
+	/// </value>
+	public DungeonDataTile[,] Tiles_old {
+		get {
+			if (this._tiles_old == null) {
+//				this._tiles_old = GetTiles ();
+			}
+			return this._tiles_old;
+		}
+		set {
+			this._tiles_old = value;
 		}
 	}
 	#endregion
@@ -71,20 +91,20 @@ public class DungeonData : ScriptableObject
 	/// <returns>
 	/// The tiles of this dungeon.
 	/// </returns>
-	public DungeonDataTile[,] GetTiles ()
+	public Dictionary <int, DungeonDataTile> GetTiles ()
 	{
-		DungeonDataTile[,] ret = new DungeonDataTile[width, height];
+		DungeonDataTile[,] tilesGrid = new DungeonDataTile[width, height];
 		
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
-				ret [i, j] = new DungeonDataTile ();
+				tilesGrid [i, j] = new DungeonDataTile ();
 			}
 		}
 		
 		for (int k = 0; k < roads.Count; k++) {
 			for (int j = 0; j <= roads[k].y2 - roads[k].y1; j++) {
 				for (int i = 0; i <= roads[k].x2 - roads[k].x1; i++) {
-					ret [i + roads [k].x1, j + roads [k].y1].road = roads [k];
+					tilesGrid [i + roads [k].x1, j + roads [k].y1].road = roads [k];
 				}
 			}
 		}
@@ -92,8 +112,16 @@ public class DungeonData : ScriptableObject
 		for (int k = 0; k < rooms.Count; k++) {
 			for (int j = 0; j < rooms[k].height; j++) {
 				for (int i = 0; i < rooms[k].width; i++) {
-					ret [i + rooms [k].x, j + rooms [k].y].room = rooms [k];
+					tilesGrid [i + rooms [k].x, j + rooms [k].y].room = rooms [k];
 				}
+			}
+		}
+		
+		Dictionary <int, DungeonDataTile> ret = new Dictionary<int, DungeonDataTile> (width * height);
+
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				ret.Add (DungeonUtils.GetCodeOfTileByIndex (i, j), tilesGrid [i, j]);
 			}
 		}
 		
@@ -123,15 +151,27 @@ public class DungeonData : ScriptableObject
 		}
 		
 		ret += "\n\nMap:\n";
+		
+		
+		string[,] tiles = new string[width, height];
+		foreach (KeyValuePair<int, DungeonDataTile> kvp in Tiles) {
+			int code = kvp.Key;
+			DungeonDataTile tile = kvp.Value;
+			
+			int i, j;
+			DungeonUtils.GetIndexesOfTileByCode (code, out i, out j);
+			if (tile.room != null) {
+				tiles [i, j] = "0 ";
+			} else if (tile.road != null) {
+				tiles [i, j] = "X ";
+			} else {
+				tiles [i, j] = "- ";
+			}
+		}
+		
 		for (int j = 0; j < height; j++) {
 			for (int i = 0; i < width; i++) {
-				if (Tiles [i, j].room != null) {
-					ret += "0 ";
-				} else if (Tiles [i, j].road != null) {
-					ret += "X ";
-				} else {
-					ret += "- ";
-				}
+				ret += tiles [i, j];
 			}
 			ret += "\n";
 		}
@@ -195,6 +235,8 @@ public class DungeonData : ScriptableObject
 		);
 		
 		ret.Roads = PlaceRoads (ret.rooms);
+		
+		PrepareObjects (ret);
 		
 		return ret;
 	}
@@ -360,6 +402,241 @@ public class DungeonData : ScriptableObject
 		
 		return ret;
 	}
+	
+	/// <summary>
+	/// Prepares the objects for tiles that can be created later.
+	/// </summary>
+	/// <param name='dungeon'>
+	/// Dungeon data.
+	/// </param>
+	public static void PrepareObjects (DungeonData dungeon)
+	{
+		PrepareBaseGeometry (dungeon);
+		PrepareLights (dungeon);
+	}
+	
+	/// <summary>
+	/// Prepares tile objects such as a walls, passages, floors and ceilings.
+	/// </summary>
+	/// <param name='dungeon'>
+	/// Dungeon.
+	/// </param>
+	public static void PrepareBaseGeometry (DungeonData dungeon)
+	{
+		Dictionary <int, DungeonDataTile> tiles = dungeon.Tiles;
+		
+		// For every tile in map
+		foreach (KeyValuePair<int, DungeonDataTile> kvp in tiles) {
+			int code = kvp.Key;
+			DungeonDataTile tile = kvp.Value;
+			
+			int i, j;
+			DungeonUtils.GetIndexesOfTileByCode (code, out i, out j);	
+			
+			// If current tile is a room..
+			if (tiles [code].room != null) {
+				// Set floor
+				DungeonObject floor = new DungeonObject (code, DungeonObjectType.Floor, "dirt_floor");
+				tile.Objects.Add (floor);
+			
+				// Set ceiling
+				DungeonObject ceiling = new DungeonObject (code, DungeonObjectType.Ceiling, "dirt_ceiling");
+				tile.Objects.Add (ceiling);
+			
+				// LEFT wall
+				// If it is a left border set left wall
+				if (i == 0) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i - 1, j, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int leftCode = DungeonUtils.GetCodeOfTileByIndex (i - 1, j);
+					if (tiles.ContainsKey (leftCode)) {
+						if (tiles [leftCode].room == null && tiles [leftCode].road != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i - 1, j, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [leftCode].room == null && tiles [leftCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i - 1, j, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// TOP wall
+				// If it is a top border set top wall
+				if (j == 0) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j - 1, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int topCode = DungeonUtils.GetCodeOfTileByIndex (i, j - 1);
+					if (tiles.ContainsKey (topCode)) {
+						if (tiles [topCode].room == null && tiles [topCode].road != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i, j - 1, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [topCode].room == null && tiles [topCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j - 1, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// RIGHT wall
+				// If it is a right border set right wall
+				if (i == dungeon.width - 1) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i + 1, j, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int rightCode = DungeonUtils.GetCodeOfTileByIndex (i + 1, j);
+					if (tiles.ContainsKey (rightCode)) {
+						if (tiles [rightCode].room == null && tiles [rightCode].road != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i + 1, j, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [rightCode].room == null && tiles [rightCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i + 1, j, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// BOTTOM wall
+				// If it is a bottom border set bottom wall
+				if (j == dungeon.height - 1) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j + 1, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int bottomCode = DungeonUtils.GetCodeOfTileByIndex (i, j + 1);
+					if (tiles.ContainsKey (bottomCode)) {
+						if (tiles [bottomCode].room == null && tiles [bottomCode].road != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i, j + 1, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [bottomCode].room == null && tiles [bottomCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j + 1, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+			} else if (tiles [code].road != null) {
+				// Set floor
+				DungeonObject floor = new DungeonObject (code, DungeonObjectType.Floor, "dirt_floor");
+				tile.Objects.Add (floor);
+			
+				// Set ceiling
+				DungeonObject ceiling = new DungeonObject (code, DungeonObjectType.Ceiling, "dirt_ceiling");
+				tile.Objects.Add (ceiling);
+			
+				// LEFT wall
+				// If it is a left border set left wall
+				if (i == 0) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i - 1, j, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int leftCode = DungeonUtils.GetCodeOfTileByIndex (i - 1, j);
+					if (tiles.ContainsKey (leftCode)) {
+						if (tiles [leftCode].room != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i - 1, j, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [leftCode].room == null && tiles [leftCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i - 1, j, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// TOP wall
+				// If it is a top border set top wall
+				if (j == 0) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j - 1, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int topCode = DungeonUtils.GetCodeOfTileByIndex (i, j - 1);
+					if (tiles.ContainsKey (topCode)) {
+						if (tiles [topCode].room != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i, j - 1, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [topCode].room == null && tiles [topCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j - 1, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// RIGHT wall
+				// If it is a right border set right wall
+				if (i == dungeon.width - 1) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i + 1, j, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int rightCode = DungeonUtils.GetCodeOfTileByIndex (i + 1, j);
+					if (tiles.ContainsKey (rightCode)) {
+						if (tiles [rightCode].room != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i + 1, j, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [rightCode].room == null && tiles [rightCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i + 1, j, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+				
+				// BOTTOM wall
+				// If it is a bottom border set bottom wall
+				if (j == dungeon.height - 1) {
+					DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j + 1, i, j); 
+					tile.Objects.Add (newWall);
+				} else {
+					int bottomCode = DungeonUtils.GetCodeOfTileByIndex (i, j + 1);
+					if (tiles.ContainsKey (bottomCode)) {
+						if (tiles [bottomCode].room != null) {
+							DungeonObject newPassage = PrepareWallObject (code, DungeonObjectType.Passage, "passage_rock_arc", i, j + 1, i, j); 
+							tile.Objects.Add (newPassage);
+						} else if (tiles [bottomCode].room == null && tiles [bottomCode].road == null) {
+							DungeonObject newWall = PrepareWallObject (code, DungeonObjectType.Wall, "wall_rock", i, j + 1, i, j); 
+							tile.Objects.Add (newWall);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static void PrepareLights (DungeonData dungeon)
+	{
+		// TODO: Prepare lights
+	}
+	
+	/// <summary>
+	/// Prepares the wall object for tile.
+	/// </summary>
+	/// <returns>
+	/// Prepared wall object as dungeon object.
+	/// </returns>
+	/// <param name='code'>
+	/// Code of tile.
+	/// </param>
+	/// <param name='objectType'>
+	/// Object type.
+	/// </param>
+	/// <param name='prefabReference'>
+	/// Prefab string reference to resource.
+	/// </param>
+	/// <param name='fromI'>
+	/// I index of source tile.
+	/// </param>
+	/// <param name='fromJ'>
+	/// J index of source tile.
+	/// </param>
+	/// <param name='toI'>
+	/// I index of target tile.
+	/// </param>
+	/// <param name='toJ'>
+	/// J index of target tile.
+	/// </param>
+	public static DungeonObject PrepareWallObject (int code, DungeonObjectType objectType, string prefabReference, int fromI, int fromJ, int toI, int toJ)
+	{
+		DungeonObject newDungeonObject = new DungeonObject (code, objectType, prefabReference);
+		newDungeonObject.rotation = DungeonUtils.GetRotationFromToTile (fromI, fromJ, toI, toJ);
+		newDungeonObject.offset = newDungeonObject.rotation * new Vector3 (0f, 0f, -DungeonUtils.TileSize * 0.5f);
+		return newDungeonObject;
+	}
 	#endregion
 }
 
@@ -373,6 +650,19 @@ public class DungeonDataTile
 {
 	public DungeonRoom room;
 	public DungeonRoad road;
+	
+	#region Properties
+	private List<DungeonObject> _objects;
+	
+	public List<DungeonObject> Objects {
+		get {
+			if (_objects == null) {
+				_objects = new List<DungeonObject> ();
+			}
+			return _objects;
+		}
+	}
+	#endregion
 	
 	/// <summary>
 	/// Initializes a new instance of the <see cref="DungeonDataTile"/> class.
@@ -490,4 +780,30 @@ public class DungeonRoad
 	{
 		return "Road { x1:" + x1 + ", x2:" + x2 + ", y1:" + y1 + ", y2:" + y2 + "}";
 	}
+}
+
+[System.Serializable]
+public class DungeonObject
+{
+	public int code;
+	public DungeonObjectType type;
+	public string prefabReference;
+	public Vector3 offset;
+	public Quaternion rotation;
+	
+	public DungeonObject (int code, DungeonObjectType type, string prefabReference)
+	{
+		this.code = code;
+		this.type = type;
+		this.prefabReference = prefabReference;
+	}
+}
+
+public enum DungeonObjectType
+{
+	Ceiling,
+	Floor,
+	LightSource,
+	Passage,
+	Wall
 }

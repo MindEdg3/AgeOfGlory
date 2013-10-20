@@ -9,7 +9,7 @@ public static class DungeonUtils
 	/// <summary>
 	/// The width and height of the tile.
 	/// </summary>
-	public static float TileSize = 4;
+	public static float TileSize = 4f;
 	
 	/// <summary>
 	/// Gets position in center of the tile at specified index.
@@ -73,7 +73,7 @@ public static class DungeonUtils
 	/// </param>
 	public static int GetCodeOfTileByIndex (int i, int j)
 	{
-		return (i << 8) + j;
+		return ((i - 32768) << 16) | j;
 	}
 	
 	/// <summary>
@@ -90,8 +90,43 @@ public static class DungeonUtils
 	/// </param>
 	public static void GetIndexesOfTileByCode (int code, out int i, out int j)
 	{
-		i = code >> 8;
-		j = code & 255;
+		i = (code >> 16) + 32768;
+		j = code & 0xFFFF;
+	}
+	
+	/// <summary>
+	/// Gets the rotation of object directed from one tile to other.
+	/// </summary>
+	/// <returns>
+	/// The directed rotation.
+	/// </returns>
+	/// <param name='fromI'>
+	/// I of first tile.
+	/// </param>
+	/// <param name='fromJ'>
+	/// J of first tile.
+	/// </param>
+	/// <param name='toI'>
+	/// I of second tile.
+	/// </param>
+	/// <param name='toJ'>
+	/// J of second tile.
+	/// </param>
+	public static Quaternion GetRotationFromToTile (int fromI, int fromJ, int toI, int toJ)
+	{
+		Quaternion rot = Quaternion.identity;
+		
+		if (toI == fromI && fromJ > toJ) {
+			rot = Quaternion.identity;
+		} else if (fromI < toI && fromJ == toJ) {
+			rot = Quaternion.Euler (0f, 90f, 0f);
+		} else if (fromI == toI && fromJ < toJ) {
+			rot = Quaternion.Euler (0f, 180f, 0f);
+		} else if (fromI > toI && fromJ == toJ) {
+			rot = Quaternion.Euler (0f, 270f, 0f);
+		}
+		
+		return rot;
 	}
 	
 	/// <summary>
@@ -114,7 +149,7 @@ public static class DungeonUtils
 	/// </param>
 	public static int GetCodeBetweenTilesByIndex (int i1, int j1, int i2, int j2)
 	{
-		return ((i1 - 128) << 24) + (j1 << 16) + (i2 << 8) + j2;
+		return ((i1 - 128) << 24) | (j1 << 16) | (i2 << 8) | j2;
 	}
 	
 	/// <summary>

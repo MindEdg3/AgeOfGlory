@@ -30,6 +30,7 @@ public class PlayerDungeonController : CreatureEntity
 	// Use this for initialization
 	protected override void Start ()
 	{
+		Dm.UpdateVisibleTiles (_currentX, _currentY);
 	}
 	
 	Vector3 lastPosition;
@@ -75,18 +76,22 @@ public class PlayerDungeonController : CreatureEntity
 		} else if (Input.GetButton ("Forward")) {
 			if (MoveTo (Direction.Forward)) {
 				State = PlayerState.Move;
+				Dm.UpdateVisibleTiles (_currentX, _currentY);
 			}
 		} else if (Input.GetButton ("Backward")) {
 			if (MoveTo (Direction.Backward)) {
 				State = PlayerState.Move;
+				Dm.UpdateVisibleTiles (_currentX, _currentY);
 			}
 		} else if (Input.GetButton ("Strafe Right")) {
 			if (MoveTo (Direction.Right)) {
 				State = PlayerState.Move;
+				Dm.UpdateVisibleTiles (_currentX, _currentY);
 			}
 		} else if (Input.GetButton ("Strafe Left")) {
 			if (MoveTo (Direction.Left)) {
 				State = PlayerState.Move;
+				Dm.UpdateVisibleTiles (_currentX, _currentY);
 			}
 		}
 	}

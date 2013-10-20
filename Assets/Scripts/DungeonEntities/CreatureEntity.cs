@@ -29,61 +29,72 @@ public class CreatureEntity : DungeonEntity
 		Direction targetDirectionAbsolute = (Direction)(((byte)_currentDirection + (byte)targetDirectionRelative) % 4);
 		
 		// set target position
-		switch (targetDirectionAbsolute) {
-		case Direction.Forward:
-			if (CheckTileMoveability (_currentX, _currentY - 1)) {
+		if (CheckTileMoveability (targetDirectionAbsolute)) {
+			switch (targetDirectionAbsolute) {
+			case Direction.Forward:
 				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, --_currentY);
 				ret = true;
-			}
-			break;
-		case Direction.Right:
-			if (CheckTileMoveability (_currentX + 1, _currentY)) {
+				break;
+			case Direction.Right:
 				_targetPosition = DungeonUtils.GetPositionByIndex (++_currentX, _currentY);
 				ret = true;
-			}
-			break;
-		case Direction.Backward:
-			if (CheckTileMoveability (_currentX, _currentY + 1)) {
+				break;
+			case Direction.Backward:
 				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, ++_currentY);
 				ret = true;
-			}
-			break;
-		case Direction.Left:
-			if (CheckTileMoveability (_currentX - 1, _currentY)) {
+				break;
+			case Direction.Left:
 				_targetPosition = DungeonUtils.GetPositionByIndex (--_currentX, _currentY);
 				ret = true;
+				break;
+			default:
+				break;
 			}
-			break;
-		default:
-			break;
 		}
 		
 		return ret;
 	}
-	
+
 	/// <summary>
 	/// Checks the tile moveability.
 	/// </summary>
 	/// <returns>
-	/// The tile moveability.
+	/// Can creature make move to tile in specified direction from current tile or can not.
 	/// </returns>
-	/// <param name='tileX'>
-	/// X tile index.
+	/// <param name='moveDirection'>
+	/// Absolute direction of target tile relatively to current
 	/// </param>
-	/// <param name='tileY'>
-	/// Y tile index.
-	/// </param>
-	protected bool CheckTileMoveability (int tileX, int tileY)
+	protected bool CheckTileMoveability (Direction moveDirection)
 	{
-		if (tileX >= 0 && tileX < Dm.CurrentDungeon.width && 
-			tileY >= 0 && tileY < Dm.CurrentDungeon.height) {
-			
-			DungeonDataTile tile = Dm.CurrentDungeon.Tiles [tileX, tileY];
+		DungeonDataTile tile = Dm.CurrentDungeon.Tiles [DungeonUtils.GetCodeOfTileByIndex (_currentX, _currentY)];
+		Quaternion rot;
 		
-			return tile.road != null || tile.room != null;
-		} else {
+		// Get rotation that should have wall to stop moving
+		switch (moveDirection) {
+		case Direction.Forward:
+			rot = DungeonUtils.GetRotationFromToTile (0, 0, 0, 1);
+			break;
+		case Direction.Right:
+			rot = DungeonUtils.GetRotationFromToTile (1, 0, 0, 0);
+			break;
+		case Direction.Backward:
+			rot = DungeonUtils.GetRotationFromToTile (0, 1, 0, 0);
+			break;
+		case Direction.Left:
+			rot = DungeonUtils.GetRotationFromToTile (0, 0, 1, 0);
+			break;
+		default:
 			return false;
 		}
+		
+		// Check if there is any wall nearly rotated against to movementDirection
+		for (int i = 0; i < tile.Objects.Count; i++) {
+			if (tile.Objects [i].type == DungeonObjectType.Wall && Quaternion.Angle (rot, tile.Objects [i].rotation) < 10) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	/// <summary>
