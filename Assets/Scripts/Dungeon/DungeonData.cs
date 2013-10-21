@@ -412,7 +412,7 @@ public class DungeonData : ScriptableObject
 	public static void PrepareObjects (DungeonData dungeon)
 	{
 		PrepareBaseGeometry (dungeon);
-		PrepareLights (dungeon);
+		PrepareCoridorsDecoration (dungeon);
 	}
 	
 	/// <summary>
@@ -597,10 +597,46 @@ public class DungeonData : ScriptableObject
 			}
 		}
 	}
-
-	public static void PrepareLights (DungeonData dungeon)
+	
+	/// <summary>
+	/// Prepares the coridors decoration.
+	/// </summary>
+	/// <param name='dungeon'>
+	/// Dungeon data.
+	/// </param>
+	public static void PrepareCoridorsDecoration (DungeonData dungeon)
 	{
-		// TODO: Prepare lights
+		List<DungeonRoad> roads = dungeon.Roads;
+		
+		for (int c = 0; c < roads.Count; c++) {
+			DungeonRoad corridor = roads [c];
+			
+			// for every tile in corridor
+			for (int j = corridor.y1; j <= corridor.y2; j++) {
+				for (int i = corridor.x1; i <= corridor.x2; i++) {
+					int code = DungeonUtils.GetCodeOfTileByIndex (i, j);
+					#region Lights
+					// 50% to create a torchlight
+					if (Random.value > 0.5f) {
+						DungeonDataTile tile = dungeon.Tiles [code];
+						
+						//if it is a corridor
+						if (tile.room == null) {
+							for (int o = 0; o < tile.Objects.Count; o++) {
+								if (tile.Objects [o].type == DungeonObjectType.Wall) {
+									DungeonObject newTorch = new DungeonObject (code, DungeonObjectType.LightSource, "Torch");
+									newTorch.offset = tile.Objects[o].offset;
+									newTorch.rotation = tile.Objects[o].rotation;
+									tile.Objects.Add (newTorch);
+									break;	
+								}
+							}
+						}
+					}
+					#endregion
+				}
+			}
+		}
 	}
 	
 	/// <summary>
