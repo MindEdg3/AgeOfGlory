@@ -23,7 +23,7 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			if (rooms != value) {
-				_tiles_old = null;
+				Tiles = null;
 				rooms = value;
 			}
 		}
@@ -37,7 +37,7 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			if (roads != value) {
-				_tiles_old = null;
+				Tiles = null;
 				roads = value;
 			}
 		}
@@ -60,26 +60,6 @@ public class DungeonData : ScriptableObject
 		}
 		set {
 			this._tiles = value;
-		}
-	}
-	
-	private DungeonDataTile[,] _tiles_old;
-	
-	/// <summary>
-	/// The tiles of this dungeon. If rooms or roads had been changed, tiles need to be recreated.
-	/// </summary>
-	/// <value>
-	/// The tiles of this dungeon.
-	/// </value>
-	public DungeonDataTile[,] Tiles_old {
-		get {
-			if (this._tiles_old == null) {
-//				this._tiles_old = GetTiles ();
-			}
-			return this._tiles_old;
-		}
-		set {
-			this._tiles_old = value;
 		}
 	}
 	#endregion
@@ -625,8 +605,8 @@ public class DungeonData : ScriptableObject
 							for (int o = 0; o < tile.Objects.Count; o++) {
 								if (tile.Objects [o].type == DungeonObjectType.Wall) {
 									DungeonObject newTorch = new DungeonObject (code, DungeonObjectType.LightSource, "Torch");
-									newTorch.offset = tile.Objects[o].offset;
-									newTorch.rotation = tile.Objects[o].rotation;
+									newTorch.offset = tile.Objects [o].offset;
+									newTorch.rotation = tile.Objects [o].rotation;
 									tile.Objects.Add (newTorch);
 									break;	
 								}

@@ -1,15 +1,30 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CreatureEntity : DungeonEntity
+public class CreatureEntity : DungeonEntity, ITurnBasedAble
 {
 	public float moveSpeed;
 	[System.NonSerialized]
-	public int _currentX;
+	public int _currentI;
 	[System.NonSerialized]
-	public int _currentY;
+	public int _currentJ;
 	protected Vector3 _targetPosition;
 	protected Direction _currentDirection;
+	protected bool _activeTurn;
+	
+	protected override void Start ()
+	{
+		GameManager.Instance.RegisterTurnBasedClient (this);
+	}
+	
+	protected override void Update ()
+	{
+		base.Update ();
+		
+		if (_activeTurn) {
+			EndTurn ();
+		}
+	}
 	
 	/// <summary>
 	/// Moves to tile according to pressed key realtive to current direction. E.g., if player directed Backwards and pressed key Strafe Right,
@@ -32,19 +47,19 @@ public class CreatureEntity : DungeonEntity
 		if (CheckTileMoveability (targetDirectionAbsolute)) {
 			switch (targetDirectionAbsolute) {
 			case Direction.Forward:
-				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, --_currentY);
+				_targetPosition = DungeonUtils.GetPositionByIndex (_currentI, --_currentJ);
 				ret = true;
 				break;
 			case Direction.Right:
-				_targetPosition = DungeonUtils.GetPositionByIndex (++_currentX, _currentY);
+				_targetPosition = DungeonUtils.GetPositionByIndex (++_currentI, _currentJ);
 				ret = true;
 				break;
 			case Direction.Backward:
-				_targetPosition = DungeonUtils.GetPositionByIndex (_currentX, ++_currentY);
+				_targetPosition = DungeonUtils.GetPositionByIndex (_currentI, ++_currentJ);
 				ret = true;
 				break;
 			case Direction.Left:
-				_targetPosition = DungeonUtils.GetPositionByIndex (--_currentX, _currentY);
+				_targetPosition = DungeonUtils.GetPositionByIndex (--_currentI, _currentJ);
 				ret = true;
 				break;
 			default:
@@ -66,7 +81,7 @@ public class CreatureEntity : DungeonEntity
 	/// </param>
 	protected bool CheckTileMoveability (Direction moveDirection)
 	{
-		DungeonDataTile tile = Dm.CurrentDungeon.Tiles [DungeonUtils.GetCodeOfTileByIndex (_currentX, _currentY)];
+		DungeonDataTile tile = Dm.CurrentDungeon.Tiles [DungeonUtils.GetCodeOfTileByIndex (_currentI, _currentJ)];
 		Quaternion rot;
 		
 		// Get rotation that should have wall to stop moving
@@ -110,4 +125,22 @@ public class CreatureEntity : DungeonEntity
 		_currentDirection = (Direction)(newDirection);
 		Tr.rotation = Quaternion.Euler (0f, newDirection * 90f, 0f);
 	}
+
+	#region ITurnBasedAble implementation
+	public int RoundsToPass {
+		get;
+		set;
+	}
+	
+	public virtual void TakeTurn ()
+	{
+		_activeTurn = true;
+	}
+
+	public virtual void EndTurn ()
+	{
+		_activeTurn = false;
+		GameManager.Instance.ClientEndedTurn ();
+	}
+	#endregion
 }

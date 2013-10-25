@@ -125,9 +125,8 @@ public class DungeonManager : MonoBehaviour
 		
 		// Init player
 		MyPlayerTr.position = DungeonUtils.GetPositionByIndex (CurrentDungeon.entranceX, CurrentDungeon.entranceY);
-		MyPlayer.State = PlayerState.Idle;
-		MyPlayer._currentX = CurrentDungeon.entranceX;
-		MyPlayer._currentY = CurrentDungeon.entranceY;
+		MyPlayer._currentI = CurrentDungeon.entranceX;
+		MyPlayer._currentJ = CurrentDungeon.entranceY;
 	}
 	
 	/// <summary>
@@ -186,83 +185,5 @@ public class DungeonManager : MonoBehaviour
 		}
 		
 		createdObjects = newObjects;
-	}
-	
-	
-	/// <summary>
-	/// Decorates the roads.
-	/// </summary>
-	/// <param name='dungeon'>
-	/// Dungeon.
-	/// </param>
-	public void DecorateRoads (DungeonData dungeon)
-	{
-		GameObject torchPrefab = (Resources.Load (DungeonManager.LIGHTS_PATH + "Torch") as GameObject).gameObject;
-		
-		// Torches
-		List<DungeonRoad> roads = dungeon.Roads;
-		for (int r = 0; r < roads.Count; r++) {
-			DungeonRoad road = roads [r];
-			
-			// for every tile in road
-			for (int j = road.y1; j <= road.y2; j++) {
-				for (int i = road.x1; i <= road.x2; i++) {
-					// 50% to create a torchlight
-					if (Random.value > 0.5f) {
-						//if it is a corridor
-						if (dungeon.Tiles_old [i, j].room == null) {
-							
-							// slight randomiztion of first side to be checked
-							int randomStart = Random.Range (0, 4);
-							
-							// check every side around a floor for a wall
-							for (byte s = 0; s < 4; s++) {
-								int x = 0, y = 0;
-							
-								// limit randomized index to maximum value of 4
-								int startIndex = (s + randomStart) % 4;
-								
-								switch (startIndex) {
-								case 0:
-									x = i;
-									y = j - 1;
-									break;
-								case 1:
-									x = i + 1;
-									y = j;
-									break;
-								case 2:
-									x = i;
-									y = j + 1;
-									break;
-								case 3:
-									x = i - 1;
-									y = j;
-									break;
-								}
-							
-								int code = DungeonUtils.GetCodeBetweenTilesByIndex (x, y, i, j);
-							
-								// if there are wall
-								if (walls.ContainsKey (code)) {
-									// and torch hasn't been attached already
-									if (!torches.ContainsKey (code)) {
-										// create it at wall and save to collection!
-										Vector3 torchPosition = walls [code].transform.position;
-										Quaternion torchRotation = Quaternion.Euler (0f, startIndex * 90f, 0f);
-										GameObject newTorch = Instantiate (torchPrefab, torchPosition, torchRotation) as GameObject;
-										newTorch.name = "torch_" + code;
-										
-										torches.Add (code, newTorch);
-									}
-									// anyway, we don't need any more torches for this tile..
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 }
