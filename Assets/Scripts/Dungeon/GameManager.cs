@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
 			roundQueue.Enqueue (turnBasedClients [i]);
 		}
 		_roundsCount++;
-		Debug.Log("Round " + _roundsCount + " started!");
+		Debug.Log ("Round " + _roundsCount + " started!");
 	}
 	
 	/// <summary>
